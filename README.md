@@ -5,6 +5,8 @@ A web-based interface for automating MetaTrader 5 backtests with dynamic paramet
 ## What It Does
 
 This system automatically reads your MQL5 Expert Advisor file and creates a web form for all input parameters. You can then run backtests with different settings and time periods (such as weekly, monthly, overall) without manually editing configuration files, at the end it Shows profit/loss and drawdown for each test period.
+!(dashboard.jpg)
+!(results.jpg)
 
 ## Quick Start
 
