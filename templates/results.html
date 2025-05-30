@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Backtest Results</title>
+
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f9f9f9;
+      margin: 0;
+      padding: 1rem;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 2rem;
+      color: #333;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background-color: #ffffff;
+      border-radius: 10px;
+      padding: 2rem;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .period-type {
+      text-align: center;
+      font-size: 1.2rem;
+      margin-bottom: 1.5rem;
+      color: #2c3e50;
+      font-weight: bold;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 2rem;
+    }
+
+    th, td {
+      padding: 0.8rem;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+
+    th {
+      background-color: #3498db;
+      color: white;
+      font-weight: bold;
+    }
+
+    tr:nth-child(even) {
+      background-color: #f8f9fa;
+    }
+
+    tr:hover {
+      background-color: #e8f4f8;
+    }
+
+    .success {
+      color: #27ae60;
+      font-weight: bold;
+    }
+
+    .error {
+      color: #e74c3c;
+      font-weight: bold;
+    }
+
+    .profit-positive {
+      color: #27ae60;
+      font-weight: bold;
+    }
+
+    .profit-negative {
+      color: #e74c3c;
+      font-weight: bold;
+    }
+
+    .back-button {
+      display: inline-block;
+      padding: 0.8rem 2rem;
+      background-color: #95a5a6;
+      color: white;
+      text-decoration: none;
+      border-radius: 8px;
+      transition: background-color 0.3s ease;
+      margin-bottom: 2rem;
+    }
+
+    .back-button:hover {
+      background-color: #7f8c8d;
+    }
+
+    .summary {
+      margin-top: 2rem;
+      padding: 1rem;
+      background-color: #ecf0f1;
+      border-radius: 8px;
+    }
+
+    .summary h3 {
+      margin-top: 0;
+      color: #2c3e50;
+    }
+
+    @media (max-width: 768px) {
+      table {
+        font-size: 0.9rem;
+      }
+      
+      th, td {
+        padding: 0.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <a href="/" class="back-button">← Back to Configuration</a>
+    
+    <h1>Backtest Results</h1>
+    
+    <div class="period-type">
+      Report Type: {{ period_type.title() }}
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Period</th>
+          <th>Date Range</th>
+          <th>Total Net Profit</th>
+          <th>Balance Drawdown Maximal</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for result in results %}
+        <tr>
+          <td><strong>{{ result.period_name }}</strong></td>
+          <td>{{ result.start_date }} to {{ result.end_date }}</td>
+          {% if result.success %}
+            <td class="{{ 'profit-positive' if result.profit.startswith('+') or (result.profit[0].isdigit() and not result.profit.startswith('-')) else 'profit-negative' }}">
+              {{ result.profit }}
+            </td>
+            <td>{{ result.drawdown }}</td>
+            <td class="success">✓ Success</td>
+          {% else %}
+            <td>-</td>
+            <td>-</td>
+            <td class="error">✗ {{ result.error }}</td>
+          {% endif %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    {% if results %}
+    <div class="summary">
+      <h3>Summary</h3>
+      <p><strong>Total Periods Tested:</strong> {{ results|length }}</p>
+      <p><strong>Successful Tests:</strong> {{ results|selectattr('success')|list|length }}</p>
+      <p><strong>Failed Tests:</strong> {{ results|rejectattr('success')|list|length }}</p>
+      
+      {% set successful_results = results|selectattr('success')|list %}
+      {% if successful_results %}
+      <p><strong>Overall Performance:</strong></p>
+      <ul>
+        <li>Best Period: 
+          {% set best = successful_results|max(attribute='profit') %}
+          {{ best.period_name }} ({{ best.profit }})
+        </li>
+        <li>Worst Period: 
+          {% set worst = successful_results|min(attribute='profit') %}
+          {{ worst.period_name }} ({{ worst.profit }})
+        </li>
+      </ul>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+</body>
+</html>

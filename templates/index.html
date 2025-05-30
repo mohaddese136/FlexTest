@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dynamic MetaTrader Configuration</title>
+
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f9f9f9;
+      margin: 0;
+      padding: 1rem;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 2rem;
+      color: #333;
+    }
+
+    .controls {
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+
+    .reload-btn {
+      padding: 0.5rem 1rem;
+      background-color: #e74c3c;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-left: 1rem;
+    }
+
+    .reload-btn:hover {
+      background-color: #c0392b;
+    }
+
+    .status {
+      text-align: center;
+      margin-bottom: 1rem;
+      padding: 0.5rem;
+      border-radius: 5px;
+    }
+
+    .status.success {
+      background-color: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+
+    .status.error {
+      background-color: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+
+    .main-container {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      gap: 2rem;
+      align-items: flex-start;
+    }
+
+    .settings-box {
+      background-color: #ffffff;
+      border-radius: 10px;
+      padding: 2rem;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+      border: 1px solid #ddd;
+    }
+
+    .general-settings-box {
+      flex: 0 0 400px;
+      background-color: #e8f5e8;
+      border-color: #27ae60;
+    }
+
+    .mql-settings-box {
+      flex: 1;
+      min-width: 600px;
+    }
+
+    .form-section h2 {
+      color: #2c3e50;
+      font-size: 1.3rem;
+      margin-bottom: 1.5rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid #3498db;
+      text-align: center;
+    }
+
+    .general-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+
+    .mql-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+    }
+
+    @media (max-width: 1200px) {
+      .main-container {
+        flex-direction: column;
+      }
+      
+      .general-settings-box {
+        flex: 1;
+      }
+      
+      .mql-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    @media (max-width: 768px) {
+      .mql-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      
+      .main-container {
+        gap: 1rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .mql-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .input-group {
+      margin-bottom: 1rem;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 0.25rem;
+      font-size: 0.9rem;
+      color: #555;
+      font-weight: 500;
+    }
+
+    .mql-type {
+      font-size: 0.8rem;
+      color: #7f8c8d;
+      font-style: italic;
+      margin-left: 0.5rem;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 0.5rem;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      box-sizing: border-box;
+      font-size: 0.9rem;
+    }
+
+    input[type="checkbox"] {
+      width: auto;
+      margin-right: 0.5rem;
+    }
+
+    .time-input {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+
+    .time-input input {
+      flex: 1;
+    }
+
+    .time-input span {
+      font-weight: bold;
+      color: #666;
+    }
+
+    .checkbox-group {
+      display: flex;
+      gap: 1rem;
+      margin: 0.5rem 0;
+      align-items: center;
+    }
+
+    .checkbox-group label {
+      display: flex;
+      align-items: center;
+      margin: 0;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      font-weight: normal;
+    }
+
+    .submit-wrapper {
+      text-align: center;
+      margin-top: 2rem;
+    }
+
+    button[type="submit"] {
+      padding: 1rem 2rem;
+      font-size: 1.1rem;
+      color: #fff;
+      background-color: #3498db;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    button[type="submit"]:hover {
+      background-color: #2980b9;
+    }
+
+    .no-inputs {
+      text-align: center;
+      color: #7f8c8d;
+      font-style: italic;
+      padding: 2rem;
+    }
+
+    @media (max-width: 768px) {
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>Dynamic MetaTrader Backtest Configuration</h1>
+
+  <div class="controls">
+    <span>MQL5 File: C:\Users\mohaddese\AppData\Roaming\MetaQuotes\Terminal\D0E8209F77C8CF37AD8BF550E51FF075\MQL5\Experts\prev-2.mq5</span>
+    <button class="reload-btn" onclick="reloadInputs()">Reload MQL5 Inputs</button>
+    <button class="reload-btn" onclick="debugEnums()" style="background-color: #f39c12;">Debug Enums</button>
+  </div>
+
+  <div id="status" class="status" style="display: none;"></div>
+
+  <form id="main-form" method="POST" action="/backtest">
+    <div class="main-container">
+      
+      <!-- General Settings Box -->
+      <div class="settings-box general-settings-box">
+        <h2>General Settings</h2>
+        <div class="general-grid">
+          <div class="input-group">
+            <label for="report">Report File</label>
+            <input type="text" name="report" value="x.htm" />
+          </div>
+
+          <div class="input-group">
+            <label for="expert">Expert File</label>
+            <input type="text" name="expert" value="prev-2.ex5" />
+          </div>
+
+          <div class="input-group">
+            <label for="symbol">Symbol</label>
+            <input type="text" name="symbol" value="XAUUSD" />
+          </div>
+
+          <div class="input-group">
+            <label for="period">Period</label>
+            <select name="period">
+              <option value="M1">M1</option>
+              <option value="M5">M5</option>
+              <option value="M15">M15</option>
+              <option value="M30">M30</option>
+              <option value="H1" selected>H1</option>
+              <option value="H4">H4</option>
+              <option value="D1">D1</option>
+              <option value="W1">W1</option>
+              <option value="MN1">MN1</option>
+            </select>
+          </div>
+
+          <div class="input-group">
+            <label for="from_date">From Date (YYYY.MM.DD)</label>
+            <input type="text" name="from_date" value="2025.01.02" />
+          </div>
+
+          <div class="input-group">
+            <label for="to_date">To Date (YYYY.MM.DD)</label>
+            <input type="text" name="to_date" value="2025.04.24" />
+          </div>
+
+          <div class="input-group">
+            <label for="deposit">Deposit</label>
+            <input type="number" name="deposit" value="50000" />
+          </div>
+
+          <div class="input-group">
+            <label>Report Period Type</label>
+            <div class="checkbox-group">
+              <label>
+                <input type="checkbox" name="overall" value="1" checked onchange="handlePeriodChange(this)" />
+                Overall
+              </label>
+              <label>
+                <input type="checkbox" name="weekly" value="1" onchange="handlePeriodChange(this)" />
+                Weekly
+              </label>
+              <label>
+                <input type="checkbox" name="monthly" value="1" onchange="handlePeriodChange(this)" />
+                Monthly
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MQL5 Expert Parameters Box -->
+      <div class="settings-box mql-settings-box">
+        <h2>MQL5 Expert Parameters</h2>
+        <div class="mql-grid" id="dynamic-inputs">
+          <!-- Dynamic inputs will be inserted here by JavaScript -->
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Submit button outside the boxes -->
+    <div class="submit-wrapper">
+      <button type="submit">Run Backtest</button>
+    </div>
+  </form>
+
+  <script>
+    // Dynamic inputs data from Flask
+    let dynamicInputs = {{ mql5_inputs_json | tojson | safe }};
+
+    function handlePeriodChange(checkbox) {
+      const checkboxes = document.querySelectorAll('input[name="overall"], input[name="weekly"], input[name="monthly"]');
+      
+      // Uncheck all other checkboxes
+      checkboxes.forEach(cb => {
+        if (cb !== checkbox) {
+          cb.checked = false;
+        }
+      });
+      
+      // Ensure at least one is always checked
+      if (!checkbox.checked) {
+        document.querySelector('input[name="overall"]').checked = true;
+      }
+    }
+
+    function createInputElement(inputData) {
+      const div = document.createElement('div');
+      div.className = 'input-group';
+      
+      const label = document.createElement('label');
+      label.setAttribute('for', inputData.name);
+      label.innerHTML = `${inputData.label} <span class="mql-type">(${inputData.mql_type})</span>`;
+      
+      let input;
+      
+      if (inputData.is_timestamp) {
+        // Time input for timestamp variables
+        const timeDiv = document.createElement('div');
+        timeDiv.className = 'time-input';
+        
+        const hourInput = document.createElement('input');
+        hourInput.type = 'number';
+        hourInput.name = inputData.name + 'Hour';
+        hourInput.min = '0';
+        hourInput.max = '23';
+        hourInput.value = '0';
+        hourInput.placeholder = 'Hour';
+        
+        const colonSpan = document.createElement('span');
+        colonSpan.textContent = ':';
+        
+        const minuteInput = document.createElement('input');
+        minuteInput.type = 'number';
+        minuteInput.name = inputData.name + 'Minute';
+        minuteInput.min = '0';
+        minuteInput.max = '59';
+        minuteInput.value = '0';
+        minuteInput.placeholder = 'Minute';
+        
+        timeDiv.appendChild(hourInput);
+        timeDiv.appendChild(colonSpan);
+        timeDiv.appendChild(minuteInput);
+        
+        div.appendChild(label);
+        div.appendChild(timeDiv);
+        return div;
+        
+      } else if (inputData.is_datetime) {
+        // Datetime input for MQL5 datetime variables
+        input = document.createElement('input');
+        input.type = 'datetime-local';
+        input.name = inputData.name;
+        input.value = inputData.datetime_value || '2025-01-01T00:00';
+        
+      } else if (inputData.is_enum) {
+        // Select dropdown for enum variables
+        input = document.createElement('select');
+        input.name = inputData.name;
+        
+        // Add options for each enum value
+        for (const [enumKey, enumValue] of Object.entries(inputData.enum_values)) {
+          const option = document.createElement('option');
+          option.value = enumKey;
+          option.textContent = `${enumKey} (${enumValue})`;
+          option.selected = (enumKey === inputData.default_value);
+          input.appendChild(option);
+        }
+        
+      } else if (inputData.html_type === 'checkbox') {
+        // Checkbox input
+        const checkboxDiv = document.createElement('div');
+        checkboxDiv.className = 'checkbox-label';
+        
+        input = document.createElement('input');
+        input.type = 'checkbox';
+        input.name = inputData.name;
+        input.value = '1';
+        input.checked = inputData.default_value;
+        
+        const checkboxLabel = document.createElement('span');
+        checkboxLabel.textContent = inputData.default_value ? 'True' : 'False';
+        
+        checkboxDiv.appendChild(input);
+        checkboxDiv.appendChild(checkboxLabel);
+        
+        div.appendChild(label);
+        div.appendChild(checkboxDiv);
+        return div;
+        
+      } else if (inputData.html_type === 'number') {
+        // Number input
+        input = document.createElement('input');
+        input.type = 'number';
+        input.name = inputData.name;
+        input.value = inputData.default_value;
+        if (inputData.step) input.step = inputData.step;
+        if (inputData.min) input.min = inputData.min;
+        if (inputData.max) input.max = inputData.max;
+        
+      } else {
+        // Text input
+        input = document.createElement('input');
+        input.type = 'text';
+        input.name = inputData.name;
+        input.value = inputData.default_value;
+      }
+      
+      div.appendChild(label);
+      div.appendChild(input);
+      return div;
+    }
+
+    function renderDynamicInputs() {
+      const container = document.getElementById('dynamic-inputs');
+      container.innerHTML = '';
+      
+      if (dynamicInputs.length === 0) {
+        container.innerHTML = '<div class="no-inputs">No MQL5 inputs found. Please check the MQL5 file path and click "Reload MQL5 Inputs".</div>';
+        return;
+      }
+      
+      dynamicInputs.forEach(inputData => {
+        const inputElement = createInputElement(inputData);
+        container.appendChild(inputElement);
+      });
+    }
+
+    function reloadInputs() {
+      const statusDiv = document.getElementById('status');
+      statusDiv.style.display = 'block';
+      statusDiv.className = 'status';
+      statusDiv.textContent = 'Reloading MQL5 inputs...';
+      
+      fetch('/reload_inputs')
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            statusDiv.className = 'status success';
+            statusDiv.textContent = 'Successfully reloaded inputs.';
+            // Reload the page to show new inputs
+            setTimeout(() => {
+              window.location.reload();
+            }, 2000);
+          } else {
+            statusDiv.className = 'status error';
+            statusDiv.textContent = 'Failed to reload MQL5 inputs. Please check the file path.';
+          }
+        })
+        .catch(error => {
+          statusDiv.className = 'status error';
+          statusDiv.textContent = 'Error reloading inputs: ' + error.message;
+        });
+    }
+
+    function debugEnums() {
+      const statusDiv = document.getElementById('status');
+      statusDiv.style.display = 'block';
+      statusDiv.className = 'status';
+      statusDiv.textContent = 'Debugging enum parsing...';
+      
+      fetch('/debug_enums')
+        .then(response => response.json())
+        .then(data => {
+          console.log('Debug info:', data);
+          
+          if (data.error) {
+            statusDiv.className = 'status error';
+            statusDiv.textContent = `Debug error: ${data.error}`;
+          } else {
+            statusDiv.className = 'status success';
+            statusDiv.innerHTML = `
+              <strong>Debug Results:</strong><br>
+              File exists: ${data.file_exists}<br>
+              Content length: ${data.content_length}<br>
+              Enums found: ${Object.keys(data.enums_found).length}<br>
+              Enum inputs: ${data.enum_inputs.length}<br>
+              <details>
+                <summary>Detailed info (click to expand)</summary>
+                <pre>${JSON.stringify(data, null, 2)}</pre>
+              </details>
+            `;
+          }
+        })
+        .catch(error => {
+          statusDiv.className = 'status error';
+          statusDiv.textContent = 'Error debugging enums: ' + error.message;
+        });
+    }
+
+    // Load inputs when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+      renderDynamicInputs();
+    });
+  </script>
+
+</body>
+</html>
